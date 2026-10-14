@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Report Shelf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F6F3; --surface:#FFFFFF; --surface-2:#EDF1EC;
+  --ink:#18221E; --ink-2:#5A6660; --ink-3:#8B958F;
+  --line:#DDE3DC; --line-strong:#C6CFC6;
+  --accent:#0E7C66; --accent-strong:#0A6352; --on-accent:#FFFFFF; --accent-soft:#E2F0EB;
+  --amber:#B45309; --amber-soft:#F9EEDC; --on-amber:#7C3A06;
+  --shadow:0 1px 2px rgba(24,34,30,.05),0 10px 28px rgba(24,34,30,.07);
+  --mono:"IBM Plex Mono","Cascadia Mono",Consolas,monospace;
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --sans:"Instrument Sans","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1412; --surface:#151D1A; --surface-2:#1B2421;
+    --ink:#E6EDE9; --ink-2:#93A29B; --ink-3:#66746D;
+    --line:#2A3531; --line-strong:#3A4741;
+    --accent:#34BFA5; --accent-strong:#55D2BB; --on-accent:#06251F; --accent-soft:#122B25;
+    --amber:#E0A458; --amber-soft:#2B2114; --on-amber:#F2C88C;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1412; --surface:#151D1A; --surface-2:#1B2421;
+  --ink:#E6EDE9; --ink-2:#93A29B; --ink-3:#66746D;
+  --line:#2A3531; --line-strong:#3A4741;
+  --accent:#34BFA5; --accent-strong:#55D2BB; --on-accent:#06251F; --accent-soft:#122B25;
+  --amber:#E0A458; --amber-soft:#2B2114; --on-amber:#F2C88C;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--sans); font-size:15px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(24px, env(safe-area-inset-left, 0px));padding-right:max(24px, env(safe-area-inset-right, 0px))}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- header ---------- */
+.top{padding:28px 0 0}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-strong);margin:0 0 10px}
+h1{font-family:var(--display);font-size:34px;font-weight:700;margin:0;letter-spacing:-.015em;text-wrap:balance}
+.sub{margin:10px 0 0;color:var(--ink-2);max-width:64ch;font-size:15px}
+
+/* ---------- stats ---------- */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:22px 0 0}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 16px;box-shadow:var(--shadow)}
+.stat .k{display:block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3)}
+.stat .v{display:block;font-family:var(--display);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:4px;overflow-wrap:anywhere}
+.stat .v.small{font-size:19px}
+
+/* ---------- toolbar ---------- */
+.toolbar{position:sticky;top:env(safe-area-inset-top, 0px);z-index:30;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 0;background:var(--bg);border-bottom:1px solid var(--line);margin:16px 0 0}
+#q{flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--ink);font:400 14px var(--sans)}
+#q:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
+.count{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sortlab{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);white-space:nowrap}
+#sort{padding:7px 9px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--ink);font:400 13px var(--sans);cursor:pointer}
+#sort:hover{border-color:var(--accent)}
+.iconbtn{width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--ink-2);cursor:pointer;flex:none}
+.iconbtn:hover{color:var(--accent);border-color:var(--accent)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:12px 0 2px;scrollbar-width:thin}
+.chip{font:500 12px/1 var(--sans);padding:6px 11px;border-radius:999px;border:1px solid var(--line-strong);background:transparent;color:var(--ink-2);cursor:pointer;white-space:nowrap;font-variant-numeric:tabular-nums}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+
+/* ---------- layout ---------- */
+.layout{display:grid;grid-template-columns:230px 1fr;gap:30px;margin-top:16px;align-items:start}
+#tocwrap{position:sticky;top:72px;align-self:start}
+.aside-h{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-3);margin:8px 0 10px}
+.toc-item{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;padding:6px 10px;border-radius:7px;font:400 13.5px var(--sans);color:var(--ink-2);cursor:pointer}
+.toc-item:hover{background:var(--surface-2);color:var(--ink)}
+.toc-item.on{background:var(--accent-soft);color:var(--accent-strong);font-weight:600}
+.badge{font-family:var(--mono);font-size:10.5px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:1px 7px;color:var(--ink-2);font-variant-numeric:tabular-nums;flex:none}
+.toc-item.on .badge{background:var(--surface);border-color:var(--line-strong)}
+#list{min-width:0}
+
+/* ---------- groups & rows ---------- */
+.group{margin-bottom:30px;scroll-margin-top:74px}
+.group-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line-strong);padding-bottom:8px;margin-bottom:4px}
+.group-head h2{font-family:var(--display);font-size:18px;font-weight:700;margin:0;letter-spacing:-.01em}
+.g-meta{font-family:var(--mono);font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.file{display:grid;grid-template-columns:1fr auto;gap:4px 16px;padding:10px 4px;border-bottom:1px solid var(--line);align-items:center}
+.file.lrow{grid-template-columns:auto 1fr auto;gap:4px 12px}
+.file.lrow input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent);flex:none;cursor:pointer}
+.file:hover{background:var(--surface-2)}
+.fname{font-family:var(--mono);font-size:13px;font-weight:500;overflow-wrap:anywhere;line-height:1.45}
+.fpath{font-family:var(--mono);font-size:11px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;max-width:100%}
+.f-right{display:flex;align-items:center;gap:16px}
+.fmeta{display:flex;gap:12px;align-items:center;font-family:var(--mono);font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.fsize{min-width:64px;text-align:right}
+.actions{display:flex;gap:6px}
+.btn{font:500 12px/1 var(--sans);padding:6px 11px;border-radius:7px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-2);cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.open{color:var(--accent-strong)}
+.btn.share{background:var(--amber);border-color:var(--amber);color:var(--on-amber)}
+.btn.share:hover{filter:brightness(.94);color:var(--on-amber)}
+.btn.upload{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.upload:hover{background:var(--accent-strong);color:var(--on-accent)}
+.group.local{border-left:3px solid var(--amber);padding-left:14px}
+.local-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.loc-chip{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;background:var(--amber-soft);color:var(--on-amber);border-radius:4px;padding:2px 6px;white-space:nowrap}
+.empty{padding:50px 20px;text-align:center;color:var(--ink-3)}
+
+/* ---------- modal ---------- */
+.backdrop{position:fixed;inset:0;background:rgba(8,12,10,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal{background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;max-width:540px;width:100%;padding:22px;box-shadow:var(--shadow);max-height:86vh;overflow:auto;position:relative}
+.m-close{position:absolute;top:12px;right:12px;width:30px;height:30px;border:none;background:none;font-size:20px;line-height:1;color:var(--ink-3);cursor:pointer;border-radius:6px}
+.m-close:hover{color:var(--ink);background:var(--surface-2)}
+.modal h3{margin:0 32px 4px 0;font-family:var(--mono);font-size:13.5px;font-weight:500;overflow-wrap:anywhere;line-height:1.5}
+.m-path{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin:0 0 16px;overflow-wrap:anywhere}
+.m-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.m-btn{font:500 13px/1 var(--sans);padding:11px;border-radius:9px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer;text-decoration:none;text-align:center}
+.m-btn:hover{border-color:var(--accent);color:var(--accent)}
+.m-btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.m-btn.primary:hover{background:var(--accent-strong);color:var(--on-accent)}
+.m-note{margin:16px 0 0;font-size:12px;color:var(--ink-3);border-top:1px solid var(--line);padding-top:12px}
+
+/* ---------- toast / footer ---------- */
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(10px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;z-index:60;max-width:80vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+footer{border-top:1px solid var(--line);margin-top:36px;padding:16px 0 44px;font-family:var(--mono);font-size:11px;color:var(--ink-3);line-height:1.8}
+footer code{font-family:var(--mono);background:var(--surface-2);border-radius:4px;padding:1px 5px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+@media (max-width:920px){
+  .layout{grid-template-columns:1fr}
+  #tocwrap{position:static}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .file{grid-template-columns:1fr}
+  .file.lrow{grid-template-columns:auto 1fr}
+  .f-right{justify-content:space-between;width:100%}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">Optimo Ventures · Dropbox Archive</p>
+    <h1>The Report Shelf</h1>
+    <p class="sub">Every HTML report shipped to Dropbox, on one searchable shelf — open any file in a click, or route it to Slack or email.</p>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><span class="k">Files</span><span class="v" id="st-files">—</span></div>
+    <div class="stat"><span class="k">Topics</span><span class="v" id="st-topics">—</span></div>
+    <div class="stat"><span class="k">Total size</span><span class="v" id="st-size">—</span></div>
+    <div class="stat"><span class="k">Span</span><span class="v small" id="st-span">—</span></div>
+    <div class="stat"><span class="k">On local drive</span><span class="v" id="st-local">—</span></div>
+  </div>
+
+  <div class="toolbar">
+    <input id="q" type="search" placeholder="Search by name, path, or topic…" aria-label="Search reports">
+    <span class="count" id="count"></span>
+    <button id="theme" class="iconbtn" aria-label="Toggle dark mode" title="Toggle dark mode">
+      <svg id="i-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg id="i-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+    <a class="btn" href="https://www.dropbox.com/home/Reports" target="_blank" rel="noopener">Open in Dropbox</a>
+    <label class="sortlab" for="sort">Sort</label>
+    <select id="sort" aria-label="Sort reports">
+      <option value="topic" selected>By topic</option>
+      <option value="newest">Newest first</option>
+      <option value="oldest">Oldest first</option>
+    </select>
+  </div>
+
+  <div class="chips" id="chips"></div>
+
+  <div class="layout">
+    <aside id="tocwrap">
+      <h2 class="aside-h">On the shelf</h2>
+      <nav id="toc" aria-label="Topics"></nav>
+    </aside>
+    <main id="list"></main>
+  </div>
+
+  <footer>
+    Maintained by the <code>/report-shelf</code> skill · Last refreshed <span id="updated"></span><br>
+    Open links are shared Dropbox links — anyone with the link can view a report.
+  </footer>
+</div>
+
+<div class="backdrop" id="modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <button class="m-close" id="m-close" aria-label="Close">×</button>
+    <h3 id="m-title"></h3>
+    <p class="m-path" id="m-path"></p>
+    <div class="m-actions">
+      <a class="m-btn primary" id="m-open">Open ↗</a>
+      <button class="m-btn" id="m-copy">Copy link</button>
+      <a class="m-btn" id="m-mail">Email</a>
+      <button class="m-btn" id="m-slack">Slack</button>
+    </div>
+    <p class="m-note"><b>Shared links:</b> every report on this shelf has its own view-only Dropbox shared link — anyone with the shelf link can open reports. Share the shelf itself to give your team one-click access to everything on it.</p>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script>
+const DATA = parseD(`2026-08-06|aptdf-thesis.html|/AI Training/aptdf-thesis.html|ait|63595|https://www.dropbox.com/scl/fi/o8ccuzhaetxyvebsnpljp/aptdf-thesis.html?rlkey=ssn1pxycmxs7mdh450jufg917&dl=0
+2026-09-30|AION partnership - triage and RCM (PRIVATE) v2.html|/AION partnership - triage and RCM (PRIVATE) v2.html|rcm|30070|https://www.dropbox.com/scl/fi/2grao3i37v37nrzupiork/AION-partnership-triage-and-RCM-PRIVATE-v2.html?rlkey=6f1ppmf4oqq57n0eyfkoajdme&dl=0
+2026-09-30|AION partnership - triage and RCM (PRIVATE).html|/AION partnership - triage and RCM (PRIVATE).html|rcm|24284|https://www.dropbox.com/scl/fi/dfqn6805g3snw1y342jww/AION-partnership-triage-and-RCM-PRIVATE.html?rlkey=e4hvrxstjtbrihdty6xfbg0oz&dl=0
+2026-06-24|atlassian-soc-access-review-2026-06-24.html|/atlassian-soc-access-review-2026-06-24.html|sec|41024|https://www.dropbox.com/scl/fi/mg6j0czzaq16tt07cmds6/atlassian-soc-access-review-2026-06-24.html?rlkey=sr87xfg9p9rjz9h5eyp2swqlq&dl=0
+2026-07-30|customer-zero-blueprint-2026-07-30-revB.html|/Customer Zero Initiative 2026-07-30/customer-zero-blueprint-2026-07-30-revB.html|cz|106560|https://www.dropbox.com/scl/fi/lhmsynxneoiigghs4efcm/customer-zero-blueprint-2026-07-30-revB.html?rlkey=was7tjarecjjxnxeh1sup4v0n&dl=0
+2026-09-02|customer-zero-dossier.html|/customer-zero-dossier.html|cz|47197|https://www.dropbox.com/scl/fi/gs5y2hpn3t52jy97wmqvl/customer-zero-dossier.html?rlkey=pu0qcmqmkdp5icf6qo13k5jbb&dl=0
+2026-10-04|Execution-Benchmark-Marketplace-Brief-v2.html|/Execution-Benchmark-Marketplace-Brief-v2.html|ops|36921|https://www.dropbox.com/scl/fi/uwavlbzxafz1luhsir11t/Execution-Benchmark-Marketplace-Brief-v2.html?rlkey=ibvf3t3xyl7iv7a7t321ibpay&dl=0
+2026-10-04|Execution-Benchmark-Marketplace-Brief-v3.html|/Execution-Benchmark-Marketplace-Brief-v3.html|ops|48079|https://www.dropbox.com/scl/fi/4xlqgso3egt4zr8irbyy6/Execution-Benchmark-Marketplace-Brief-v3.html?rlkey=tba1lobw77vit6lotuokcfrjq&dl=0
+2026-10-04|Execution-Benchmark-Marketplace-Brief-v4.html|/Execution-Benchmark-Marketplace-Brief-v4.html|ops|55535|https://www.dropbox.com/scl/fi/j5g8qr0me6z5uiyv8q5gy/Execution-Benchmark-Marketplace-Brief-v4.html?rlkey=r6sv83mrnu2eq59zlhlkykxxq&dl=0
+2026-10-04|Execution-Benchmark-Marketplace-Brief-v5.html|/Execution-Benchmark-Marketplace-Brief-v5.html|ops|62305|https://www.dropbox.com/scl/fi/tmuj3wcwytrpxk5aiyz8x/Execution-Benchmark-Marketplace-Brief-v5.html?rlkey=7d2qgjt9mdb3ai9oj8w5rtnp2&dl=0
+2026-10-04|Execution-Benchmark-Marketplace-Brief.html|/Execution-Benchmark-Marketplace-Brief.html|ops|22139|https://www.dropbox.com/scl/fi/salihirzhlwnnchi0mf68/Execution-Benchmark-Marketplace-Brief.html?rlkey=mh2zkxql3decvfw4183qub511&dl=0
+2026-08-25|gutwise-dependabot-triage-2026-08-25.html|/gutwise-dependabot-triage-2026-08-25.html|gw|16191|https://www.dropbox.com/scl/fi/l0su7km0vrm7jlh38l5dn/gutwise-dependabot-triage-2026-08-25.html?rlkey=ey4lfzih0no2lmktve502s5av&dl=0
+2026-08-26|gutwise-fullscript-integration-analysis.html|/gutwise-fullscript-integration-analysis.html|gw|15959|https://www.dropbox.com/scl/fi/faljb1023dhqyobt4kluw/gutwise-fullscript-integration-analysis.html?rlkey=oanak3tgdo01m6jyj756yq923&dl=0
+2026-10-05|ifs-customer-product-alignment-home.html|/ifs-customer-product-alignment-home.html|ind|7712|https://www.dropbox.com/scl/fi/q2uvd409qj2sodusxjgay/ifs-customer-product-alignment-home.html?rlkey=kfapy3u7yrqs1swllo8942b47&dl=0
+2026-10-05|ifs-customer-product-alignment.html|/ifs-customer-product-alignment.html|ind|124061|https://www.dropbox.com/scl/fi/9mnvs7unur8kpxmluhze6/ifs-customer-product-alignment.html?rlkey=8ntvit7mllw6iaigey6thaluu&dl=0
+2026-09-02|ifs_cpq_fit_analysis.html|/ifs_cpq_fit_analysis.html|ind|28237|https://www.dropbox.com/scl/fi/4p8ptsy0g8xdxvk6z8flp/ifs_cpq_fit_analysis.html?rlkey=e1q79ktz8vaarzjgv1183eerm&dl=0
+2026-09-01|ifs_requirements_source.html|/ifs_requirements_source.html|ind|36858|https://www.dropbox.com/scl/fi/0isw64ykcwmzoky725dhx/ifs_requirements_source.html?rlkey=010n0vcmfmkixf8d136in85o3&dl=0
+2025-04-24|Deal.ai Main Page.html|/Images- General/Deal.ai Main Page.html|web|263993|https://www.dropbox.com/scl/fi/djs8srdywee0uuyu1tnyy/Deal.ai-Main-Page.html?rlkey=50ipjhbj3gb83awumunk7ejht&dl=0
+2025-04-24|a8syk7r6uq(1).html|/Images- General/Deal.ai Main Page_files/a8syk7r6uq(1).html|web|72925|https://www.dropbox.com/scl/fi/vghmehy89putoopygnrjl/a8syk7r6uq-1.html?rlkey=p0rsjunpa3ye4uoh8252adgie&dl=0
+2025-04-24|a8syk7r6uq.html|/Images- General/Deal.ai Main Page_files/a8syk7r6uq.html|web|72991|https://www.dropbox.com/scl/fi/fmkjz30ld4h02s4d479x1/a8syk7r6uq.html?rlkey=gpfsqiwkamfb4rzrncd8ihgbi&dl=0
+2025-04-24|aljwmn9k9r(1).html|/Images- General/Deal.ai Main Page_files/aljwmn9k9r(1).html|web|80893|https://www.dropbox.com/scl/fi/p2jj127gm2zyg8z8pprd6/aljwmn9k9r-1.html?rlkey=161mxfslaf1nqeu8m65oiq2h3&dl=0
+2025-04-24|aljwmn9k9r.html|/Images- General/Deal.ai Main Page_files/aljwmn9k9r.html|web|80824|https://www.dropbox.com/scl/fi/j0o1xquvbcb9v4t1bddaf/aljwmn9k9r.html?rlkey=upw74bg0fjcexylrlk7za12oq&dl=0
+2025-03-30|Empower Your Business with AI-Driven Search Solutions _ OptimoAEO.html|/Images- General/Empower Your Business with AI-Driven Search Solutions _ OptimoAEO.html|web|221565|https://www.dropbox.com/scl/fi/qe30c7mby06eu5nbaeuqu/Empower-Your-Business-with-AI-Driven-Search-Solutions-_-OptimoAEO.html?rlkey=48yt1crjdp6ccnrokqxdm8hv4&dl=0
+2026-07-13|Optimo_Genesis_Calvert_County_Good_Governance.html|/Images- General/Optimo_Genesis_Calvert_County_Good_Governance.html|og|21917|https://www.dropbox.com/scl/fi/dgbo6voz6980mgvtrgsw3/Optimo_Genesis_Calvert_County_Good_Governance.html?rlkey=st13pq4im7p1dlt5asy2zihqq&dl=0
+2026-07-13|Optimo_Genesis_Tarrant_County_Good_Governance.html|/Images- General/Optimo_Genesis_Tarrant_County_Good_Governance.html|og|641|https://www.dropbox.com/scl/fi/u0wjkchgdyxsxt3gw17cp/Optimo_Genesis_Tarrant_County_Good_Governance.html?rlkey=mys1wzohcd6cs21knreu5r64t&dl=0
+2025-04-03|OptimoAEO_Email_Signature.html|/Images- General/OptimoAEO_Email_Signature.html|web|16492|https://www.dropbox.com/scl/fi/ng1p543uoz17ynx3yxeyj/OptimoAEO_Email_Signature.html?rlkey=gpaofdr6e0a1f8hbjx5o6a9e0&dl=0
+2025-04-25|OptimoAI_Main_Page_Final.html|/Images- General/OptimoAI_Main_Page_Final.html|web|262749|https://www.dropbox.com/scl/fi/lhr8iczd78fsrq4zlspzs/OptimoAI_Main_Page_Final.html?rlkey=vmvflv5zom4kxtbeqtfywhjtj&dl=0
+2025-08-11|controller-with-preconnect-c1fb6f704dacdbb4607e38dbd416a0fe.html|/Images- General/Unscripted Medicine Marketing Campaign - Claude_files/controller-with-preconnect-c1fb6f704dacdbb4607e38dbd416a0fe.html|web|1404|https://www.dropbox.com/scl/fi/86vvrbouns65oa1hfq5um/controller-with-preconnect-c1fb6f704dacdbb4607e38dbd416a0fe.html?rlkey=rbn8ay9b6gwws197hg241pwor&dl=0
+2025-08-11|inner.html|/Images- General/Unscripted Medicine Marketing Campaign - Claude_files/inner.html|web|1359|https://www.dropbox.com/scl/fi/44uukglwu3q7vf8ss0y9q/inner.html?rlkey=owxgwwq88epos91a92h7ea1gs&dl=0
+2025-08-11|isolated-segment.html|/Images- General/Unscripted Medicine Marketing Campaign - Claude_files/isolated-segment.html|web|12074|https://www.dropbox.com/scl/fi/0pxhu9wjfaqz5jx4fsvpl/isolated-segment.html?rlkey=mrzho7kwaidqeo70p73whxrvv&dl=0
+2025-08-11|m-outer-3437aaddcdf6922d623e172c2d6f9278.html|/Images- General/Unscripted Medicine Marketing Campaign - Claude_files/m-outer-3437aaddcdf6922d623e172c2d6f9278.html|web|611|https://www.dropbox.com/scl/fi/bhda9adg0oysuzcu28i31/m-outer-3437aaddcdf6922d623e172c2d6f9278.html?rlkey=sckmf4uqxn60y3yuwiugj245l&dl=0
+2025-08-11|saved_resource(1).html|/Images- General/Unscripted Medicine Marketing Campaign - Claude_files/saved_resource(1).html|web|25712|https://www.dropbox.com/scl/fi/rbnpqs8pct4uoa0esvvey/saved_resource-1.html?rlkey=n8e1uokgyy3uyupx0rnry04by&dl=0
+2025-08-11|saved_resource(2).html|/Images- General/Unscripted Medicine Marketing Campaign - Claude_files/saved_resource(2).html|web|526|https://www.dropbox.com/scl/fi/5zdelp9oavchcikbod50c/saved_resource-2.html?rlkey=5ai4yefuenu73vvq1skmz1wkx&dl=0
+2025-08-11|saved_resource(3).html|/Images- General/Unscripted Medicine Marketing Campaign - Claude_files/saved_resource(3).html|web|423|https://www.dropbox.com/scl/fi/7x0p0llznm6j2vibqs1ne/saved_resource-3.html?rlkey=hdxgo4lejzcmysfgg9esezsni&dl=0
+2025-08-11|saved_resource(4).html|/Images- General/Unscripted Medicine Marketing Campaign - Claude_files/saved_resource(4).html|web|490|https://www.dropbox.com/scl/fi/xdvdo1ilwfzy82rj8ks01/saved_resource-4.html?rlkey=knsg5iho5h5gj3inun4poap9u&dl=0
+2025-08-11|saved_resource.html|/Images- General/Unscripted Medicine Marketing Campaign - Claude_files/saved_resource.html|web|30507|https://www.dropbox.com/scl/fi/ohheh80z27qz2o3f69fdh/saved_resource.html?rlkey=e5h5xchtsb1860qkhnaoro0d0&dl=0
+2026-10-07|IFS_MRC_AI_First_Commercial_Platform_Internal_Review_v2_2026-10-07.html|/Industrial Flow Solutions/IFS_MRC_AI_First_Commercial_Platform_Internal_Review_v2_2026-10-07.html|ind|87591|https://www.dropbox.com/scl/fi/96ifx5kpkr2sr1owhm1m7/IFS_MRC_AI_First_Commercial_Platform_Internal_Review_v2_2026-10-07.html?rlkey=saztqsf3rpmmc9h1ingze1pnl&dl=0
+2026-10-07|IFS_MRC_AI_First_Commercial_Platform_Internal_Review_v3_2026-10-07.html|/Industrial Flow Solutions/IFS_MRC_AI_First_Commercial_Platform_Internal_Review_v3_2026-10-07.html|ind|87591|https://www.dropbox.com/scl/fi/bxmoii3bqcldmdnd25qyl/IFS_MRC_AI_First_Commercial_Platform_Internal_Review_v3_2026-10-07.html?rlkey=mm4q3t7d5ky6bnmywa9zztnx3&dl=0
+2026-10-07|IFS_MRC_AI_First_Commercial_Platform_Internal_Review_v3_Mobile_Fixed_2026-10-07.html|/Industrial Flow Solutions/IFS_MRC_AI_First_Commercial_Platform_Internal_Review_v3_Mobile_Fixed_2026-10-07.html|ind|89644|https://www.dropbox.com/scl/fi/q30gw3gx0gj6hdcqu2r41/IFS_MRC_AI_First_Commercial_Platform_Internal_Review_v3_Mobile_Fixed_2026-10-07.html?rlkey=sfyktbmka6v5vvbpz2kwiw894&dl=0
+2026-10-07|IFS_MRC_AI_First_Commercial_Platform_Internal_Review_v5_2026-10-07.html|/Industrial Flow Solutions/IFS_MRC_AI_First_Commercial_Platform_Internal_Review_v5_2026-10-07.html|ind|91085|https://www.dropbox.com/scl/fi/wvegi1dqga5kwv8p3ryps/IFS_MRC_AI_First_Commercial_Platform_Internal_Review_v5_2026-10-07.html?rlkey=5c1ilwzls0utx4ve58d17zd0d&dl=0
+2026-10-07|IFS_MRC_Why_OptimoMDM.html|/Industrial Flow Solutions/IFS_MRC_Why_OptimoMDM.html|mdm|24456|https://www.dropbox.com/scl/fi/dhmxiuo2u32r5exxvpyyy/IFS_MRC_Why_OptimoMDM.html?rlkey=8mx6tfdm5i69im1cz61akxfka&dl=0
+2026-10-07|IFS_MRC_Why_OptimoMDM_Immediate_Internal_Review_2026-10-07.html|/Industrial Flow Solutions/IFS_MRC_Why_OptimoMDM_Immediate_Internal_Review_2026-10-07.html|mdm|54147|https://www.dropbox.com/scl/fi/vico38yah9ljt2wea4quj/IFS_MRC_Why_OptimoMDM_Immediate_Internal_Review_2026-10-07.html?rlkey=x0tlpdgk2vc8755c9uguhvm18&dl=0
+2026-09-21|IFS_Optimo_Edge_Hardware_Comparative_Analysis_2026-09-21.html|/Industrial Flow Solutions/IFS_Optimo_Edge_Hardware_Comparative_Analysis_2026-09-21.html|ind|30953|https://www.dropbox.com/scl/fi/ri8jeoa3251hpa3t1unow/IFS_Optimo_Edge_Hardware_Comparative_Analysis_2026-09-21.html?rlkey=obxo18paiw3akma00fq2dklbz&dl=0
+2026-09-21|IFS_Optimo_Edge_Intelligence_Solution_Thesis_2026-09-20.html|/Industrial Flow Solutions/IFS_Optimo_Edge_Intelligence_Solution_Thesis_2026-09-20.html|ind|59399|https://www.dropbox.com/scl/fi/ujidg8gsmd8yscnafz4ed/IFS_Optimo_Edge_Intelligence_Solution_Thesis_2026-09-20.html?rlkey=hyaoi8pwho2usg2mw7y7na0mw&dl=0
+2026-09-02|MRC_Dynamics_Business_Central_Optimo_Primer_2026-09-02.html|/Industrial Flow Solutions/MRC_Dynamics_Business_Central_Optimo_Primer_2026-09-02.html|ind|21684|https://www.dropbox.com/scl/fi/xgg35uld77fq1ibeid57r/MRC_Dynamics_Business_Central_Optimo_Primer_2026-09-02.html?rlkey=hnpgfw0ctpiskwai5iqfekwz6&dl=0
+2026-09-02|MRC_Strategic_Engagement_Plan.html|/MRC_Strategic_Engagement_Plan.html|ind|67037|https://www.dropbox.com/scl/fi/rqoue16jj48tnajbihgrq/MRC_Strategic_Engagement_Plan.html?rlkey=vduq3wxpttc2ra1u2pi1x8v1d&dl=0
+2026-07-15|MRG_Strategic_Engagement_Plan.html|/MRG_Strategic_Engagement_Plan.html|ind|48074|https://www.dropbox.com/scl/fi/m79vgjdufijnngrepretw/MRG_Strategic_Engagement_Plan.html?rlkey=2nps3hmrmvomhzkqp8mp2apk5&dl=0
+2026-08-03|openai-presence-vs-optimo-genesis.html|/openai-presence-vs-optimo-genesis.html|og|27681|https://www.dropbox.com/scl/fi/48mnaqra8qtd5cp1s54nc/openai-presence-vs-optimo-genesis.html?rlkey=idvwfljxrciyk0y6gjzs06q7h&dl=0
+2026-10-04|optimo_revenue_command_center.html|/Optimo Marketplace GTM/optimo_revenue_command_center.html|ops|56061|https://www.dropbox.com/scl/fi/xzfs3d7dsn0qz1mtdfppc/optimo_revenue_command_center.html?rlkey=e0e6o13n4c8weilxhd71rqva1&dl=0
+2026-08-22|AI Initiative Failure Analysis v2.html|/OPTIMO VENTURES/AI Initiative Failure Analysis v2.html|ops|27746|https://www.dropbox.com/scl/fi/zif7kxvn2np6i9y8yg3ff/AI-Initiative-Failure-Analysis-v2.html?rlkey=vjz49gxih736nv4wba4von3ev&dl=0
+2026-08-22|AI Initiative Failure Analysis.html|/OPTIMO VENTURES/AI Initiative Failure Analysis.html|ops|27164|https://www.dropbox.com/scl/fi/kyzqlg5pdkeowfugavme4/AI-Initiative-Failure-Analysis.html?rlkey=sw2eahvt30p4qtq9vse3o5s76&dl=0
+2026-06-25|CAN-70-Investigation-Report.html|/OPTIMO VENTURES/CAN-70-Investigation-Report.html|rcm|14321|https://www.dropbox.com/scl/fi/amau6e2r2hrg9gqzmescg/CAN-70-Investigation-Report.html?rlkey=9cx3218b2mpgv0hqv8vxy3rmb&dl=0
+2026-06-28|GutWise-RCM-Assessment-GUT-ARCH-004.html|/OPTIMO VENTURES/GutWise/GutWise-RCM-Assessment-GUT-ARCH-004.html|gw|27164|https://www.dropbox.com/scl/fi/sy10ssax8qrzyepv2d790/GutWise-RCM-Assessment-GUT-ARCH-004.html?rlkey=huph1u1gt9rd7fzs4qw426w3o&dl=0
+2026-06-25|optimo-hipaa-audit-skill.html|/OPTIMO VENTURES/optimo-hipaa-audit-skill.html|sec|32128|https://www.dropbox.com/scl/fi/41nkkiizimt37prenmc0z/optimo-hipaa-audit-skill.html?rlkey=l23o77tsco6lshpi4k9yvs90t&dl=0
+2026-06-28|optimo-skill-analysis-triage-vs-rcm.html|/OPTIMO VENTURES/optimo-skill-analysis-triage-vs-rcm.html|rcm|32348|https://www.dropbox.com/scl/fi/1oh0ro74caxq3avqknsxl/optimo-skill-analysis-triage-vs-rcm.html?rlkey=msifhnp4kta0j3zg6obkf23oz&dl=0
+2026-06-25|optimo-soc2-audit-skill.html|/OPTIMO VENTURES/optimo-soc2-audit-skill.html|sec|37381|https://www.dropbox.com/scl/fi/gg9p7ts7mm7emghkgygjv/optimo-soc2-audit-skill.html?rlkey=ihaqr4pfb9yvz5fpb67mogsfd&dl=0
+2026-06-28|OptimoCanon-RCM-Strategic-Assessment-2026-06-28.html|/OPTIMO VENTURES/OptimoCanon-RCM-Strategic-Assessment-2026-06-28.html|og|33416|https://www.dropbox.com/scl/fi/x38inux9xnejnfcjog13l/OptimoCanon-RCM-Strategic-Assessment-2026-06-28.html?rlkey=yd8trkymy4al921qcuc3eh4rf&dl=0
+2026-07-01|OptimoSelect_Build_Analysis_2026-07-01.html|/OPTIMO VENTURES/OptimoSelect_Build_Analysis_2026-07-01.html|ind|11477|https://www.dropbox.com/scl/fi/4jmf2ijs67j1393sdnuhw/OptimoSelect_Build_Analysis_2026-07-01.html?rlkey=a2ylly37jv9lphfw8zdvix9am&dl=0
+2026-06-28|optimostudio-rcm-triage-2026-06-28.html|/OPTIMO VENTURES/optimostudio-rcm-triage-2026-06-28.html|rcm|21803|https://www.dropbox.com/scl/fi/mmduzxz98o16yk18by5el/optimostudio-rcm-triage-2026-06-28.html?rlkey=xxgyiwuwdqdvg2i87rxz1cj0b&dl=0
+2026-06-28|optimoshield-rcm-report-2026-06-28.html|/OPTIMO VENTURES/RCM Sessions/optimoshield-rcm-report-2026-06-28.html|rcm|31879|https://www.dropbox.com/scl/fi/tjjbhnglj6eb5kr8y1lsr/optimoshield-rcm-report-2026-06-28.html?rlkey=jv4l8ort88dpgzjleskhovyd0&dl=0
+2026-09-01|AppViewX-vs-OptimoGenesis-Strategic-Analysis-2026-09-01.html|/OPTIMO VENTURES/Research/AppViewX-vs-OptimoGenesis-Strategic-Analysis-2026-09-01.html|og|18090|https://www.dropbox.com/scl/fi/6mdz11jbbbh6sal39x6rq/AppViewX-vs-OptimoGenesis-Strategic-Analysis-2026-09-01.html?rlkey=42i7qc6lvlq6lpbdwf6859tvb&dl=0
+2026-09-12|cuproyale-assessment.html|/OPTIMO VENTURES/Research/cuproyale-assessment.html|ops|56125|https://www.dropbox.com/scl/fi/m3ps62h91wny06j30kv2g/cuproyale-assessment.html?rlkey=2bu2364zv25mkt25wq0mf05u2&dl=0
+2026-09-29|Optimo_Nutrition_Intelligence_Model_Pool_Team_Review_2026-09-29.html|/OPTIMO VENTURES/Research/Optimo_Nutrition_Intelligence_Model_Pool_Team_Review_2026-09-29.html|ops|57694|https://www.dropbox.com/scl/fi/bw6gp6lm1xeqyw0z87v24/Optimo_Nutrition_Intelligence_Model_Pool_Team_Review_2026-09-29.html?rlkey=x8x2pgqjka50hduw71zruryaf&dl=0
+2026-09-20|optimo_scientific_transform_engine.html|/OPTIMO VENTURES/Research/optimo_scientific_transform_engine.html|ops|51464|https://www.dropbox.com/scl/fi/xvpan6vzcx76lt1yds0xm/optimo_scientific_transform_engine.html?rlkey=i3fv86g98w0ovjp6jtdlrpjfy&dl=0
+2026-09-19|optimogenesis-epigenomic-intelligence-thesis-2026-09-19-v2.html|/OPTIMO VENTURES/Research/optimogenesis-epigenomic-intelligence-thesis-2026-09-19-v2.html|og|50632|https://www.dropbox.com/scl/fi/xkyd2aw6o1rkvzmzkkfjz/optimogenesis-epigenomic-intelligence-thesis-2026-09-19-v2.html?rlkey=4y66sm90xzicjxc5tyqk9bu04&dl=0
+2026-09-19|optimogenesis-epigenomic-intelligence-thesis-2026-09-19.html|/OPTIMO VENTURES/Research/optimogenesis-epigenomic-intelligence-thesis-2026-09-19.html|og|42300|https://www.dropbox.com/scl/fi/u4vjg399b9jjv9jvuh8f7/optimogenesis-epigenomic-intelligence-thesis-2026-09-19.html?rlkey=66cmq1q03tsx9dun8p3sha9sv&dl=0
+2026-09-17|optimogenesis-nad-cellular-rejuvenation-thesis-2026-09-17.html|/OPTIMO VENTURES/Research/optimogenesis-nad-cellular-rejuvenation-thesis-2026-09-17.html|og|52752|https://www.dropbox.com/scl/fi/pqd1xooyzmr1p6r02x5y1/optimogenesis-nad-cellular-rejuvenation-thesis-2026-09-17.html?rlkey=h1hj4mvtj9vjpqozo0ypk6tdi&dl=0
+2026-09-22|optimogenesis-semantic-fabric-executable-ontology-thesis-2026-09-21-v2.html|/OPTIMO VENTURES/Research/optimogenesis-semantic-fabric-executable-ontology-thesis-2026-09-21-v2.html|og|65948|https://www.dropbox.com/scl/fi/0mbfldrqmmfm9wlbmyovt/optimogenesis-semantic-fabric-executable-ontology-thesis-2026-09-21-v2.html?rlkey=ko8go3zytt5ojsnw20zixmib2&dl=0
+2026-09-22|optimogenesis-semantic-fabric-executable-ontology-thesis-2026-09-21.html|/OPTIMO VENTURES/Research/optimogenesis-semantic-fabric-executable-ontology-thesis-2026-09-21.html|og|41663|https://www.dropbox.com/scl/fi/wtjf2ri34qzlksjz3q5q1/optimogenesis-semantic-fabric-executable-ontology-thesis-2026-09-21.html?rlkey=4a9ubghm7k6z53bfdqpv1e0oq&dl=0
+2026-10-04|OptimoGenesis_MOSS_Auditable_Memory_Internal_Review_2026-10-04.html|/OPTIMO VENTURES/Research/OptimoGenesis_MOSS_Auditable_Memory_Internal_Review_2026-10-04.html|og|31015|https://www.dropbox.com/scl/fi/4q7pz6jtpylp1ly1zgu4a/OptimoGenesis_MOSS_Auditable_Memory_Internal_Review_2026-10-04.html?rlkey=cpjofz6tksv3vba29c6xzzys7&dl=0
+2026-09-17|optimoventures-cardiac-regeneration-thesis-2026-09-17.html|/OPTIMO VENTURES/Research/optimoventures-cardiac-regeneration-thesis-2026-09-17.html|ops|44174|https://www.dropbox.com/scl/fi/v1hj1ctwubcmf8wu93340/optimoventures-cardiac-regeneration-thesis-2026-09-17.html?rlkey=b8yj02drag4peotpsvdbnotk7&dl=0
+2026-09-03|optimo-genesis-quantum-computing-strategy.html|/OPTIMO VENTURES/Strategy/optimo-genesis-quantum-computing-strategy.html|og|25168|https://www.dropbox.com/scl/fi/n7hvbgzg11rz9a8a1cxzw/optimo-genesis-quantum-computing-strategy.html?rlkey=2kedjju6kebplyoelxbzvozfp&dl=0
+2026-06-27|GUT-ARCH-004-Triage-Report-2026-06-27.html|/OPTIMO VENTURES/Triage Reports/GUT-ARCH-004-Triage-Report-2026-06-27.html|gw|11326|https://www.dropbox.com/scl/fi/53j8yi1yq3h8meqo69x4u/GUT-ARCH-004-Triage-Report-2026-06-27.html?rlkey=f8ok8ul3hurmnfg78kso4jaz5&dl=0
+2026-07-04|HLDS_Test_Communication_DOA_Blueprint_2026-07-03.html|/OPTIMO VENTURES/Triage Reports/HLDS_Test_Communication_DOA_Blueprint_2026-07-03.html|rcm|25179|https://www.dropbox.com/scl/fi/ibmehxs5ccglrrp86b6al/HLDS_Test_Communication_DOA_Blueprint_2026-07-03.html?rlkey=auwojo1ci8b0l5aft52ga0vmo&dl=0
+2026-07-03|TelosAI_Communication_Skills_RCM_Analysis_2026-07-02.html|/OPTIMO VENTURES/Triage Reports/TelosAI_Communication_Skills_RCM_Analysis_2026-07-02.html|telos|24534|https://www.dropbox.com/scl/fi/mszkdlqykop2hsabktv4s/TelosAI_Communication_Skills_RCM_Analysis_2026-07-02.html?rlkey=ftfwzjxzzh8hkpgni19a19f84&dl=0
+2026-07-03|TelosAI_Communication_Skills_Triage_2026-07-02.html|/OPTIMO VENTURES/Triage Reports/TelosAI_Communication_Skills_Triage_2026-07-02.html|telos|21195|https://www.dropbox.com/scl/fi/74w0u662akoz891pfsmsh/TelosAI_Communication_Skills_Triage_2026-07-02.html?rlkey=nf5cjk43eia6i8d7y7rdrpz7v&dl=0
+2026-07-04|TelosAI_Stakeholder_Response_HLDS_Analysis_2026-07-03.html|/OPTIMO VENTURES/Triage Reports/TelosAI_Stakeholder_Response_HLDS_Analysis_2026-07-03.html|telos|23254|https://www.dropbox.com/scl/fi/9la8vasrhvhix3hwoumqb/TelosAI_Stakeholder_Response_HLDS_Analysis_2026-07-03.html?rlkey=nqft2xcfen5b1pveq2mwiefc6&dl=0
+2026-08-12|optimo-accounting-platform-selection-v1.2.html|/optimo-accounting-platform-selection-v1.2.html|ops|38466|https://www.dropbox.com/scl/fi/o9hwse6qqooxcole6ag1h/optimo-accounting-platform-selection-v1.2.html?rlkey=wvl11syza39xfks8hoo1vl4vj&dl=0
+2026-09-28|optimo-accounting-platform-selection-v1.3.html|/optimo-accounting-platform-selection-v1.3.html|ops|48342|https://www.dropbox.com/scl/fi/iz8037l8ede1d1f0ddvog/optimo-accounting-platform-selection-v1.3.html?rlkey=tya0a756rvuss96rj4m1lezed&dl=0
+2026-08-12|optimo-accounting-platform-selection.html|/optimo-accounting-platform-selection.html|ops|38049|https://www.dropbox.com/scl/fi/4goxfku9h82ddrrdnwfy7/optimo-accounting-platform-selection.html?rlkey=o7e0ad8lxbdvtuj3zr0jj886w&dl=0
+2026-09-01|optimo-daily-assessment-2026-09-01.html|/optimo-daily-assessment-2026-09-01.html|ocx|41885|https://www.dropbox.com/scl/fi/3ws1eelrbq6ejpu2ru4kz/optimo-daily-assessment-2026-09-01.html?rlkey=n19xjgqsa4bix920fjc78669e&dl=0
+2026-10-02|microbiome-venture-brief.html|/Optimo/Microbiome-Venture-Thesis/microbiome-venture-brief.html|ops|32262|https://www.dropbox.com/scl/fi/ony6vvygrgza9jm4u7nv1/microbiome-venture-brief.html?rlkey=9ruojs78qc2tqy5qd1t5usqj2&dl=0
+2026-08-26|OptimoAdvocate_Private_Founder_Thesis_v0.1.html|/OptimoAdvocate_Private_Founder_Thesis_v0.1.html|adv|24754|https://www.dropbox.com/scl/fi/sge3s4wyhpvd5w6z6hb3o/OptimoAdvocate_Private_Founder_Thesis_v0.1.html?rlkey=64rrehsnqs4o83zbuznrbrjsu&dl=0
+2026-08-20|OptimoExpanse_Foundational_Architecture_Review.html|/OptimoExpanse/OptimoExpanse_Foundational_Architecture_Review.html|exp|43263|https://www.dropbox.com/scl/fi/ocvl6jflg63z9i18shrat/OptimoExpanse_Foundational_Architecture_Review.html?rlkey=nac2mnfhfsqy58itn95640xgk&dl=0
+2026-10-01|beyond-cognitive-horizon-private-thesis-command-center-v0.1-2026-10-01.html|/OptimoGenesis Private Review/beyond-cognitive-horizon-private-thesis-command-center-v0.1-2026-10-01.html|og|43413|https://www.dropbox.com/scl/fi/rnoe5b1nfxjal0l43yfpp/beyond-cognitive-horizon-private-thesis-command-center-v0.1-2026-10-01.html?rlkey=682um9v3svzvpe137l8by6qhg&dl=0
+2026-10-01|beyond-cognitive-horizon-private-thesis-command-center-v0.3-2026-10-01.html|/OptimoGenesis Private Review/beyond-cognitive-horizon-private-thesis-command-center-v0.3-2026-10-01.html|og|64635|https://www.dropbox.com/scl/fi/5nmydvoh20hpab9vvlra0/beyond-cognitive-horizon-private-thesis-command-center-v0.3-2026-10-01.html?rlkey=eavh5daw36h5uialgcv5ja67f&dl=0
+2026-09-11|deepseek-v41-optimogenesis-impact-private-review-2026-09-11.html|/OptimoGenesis Private Review/deepseek-v41-optimogenesis-impact-private-review-2026-09-11.html|og|37840|https://www.dropbox.com/scl/fi/pmbl4zgclc4f1dh8vpcqb/deepseek-v41-optimogenesis-impact-private-review-2026-09-11.html?rlkey=w9vd3h4bcshid1xz4s0daf5zs&dl=0
+2026-07-30|FAC-003 Federated SLM Orchestration & Sovereign Model Pool - Architectural Analysis.html|/OptimoGenesis Private Review/FAC-003 Federated SLM Orchestration & Sovereign Model Pool - Architectural Analysis.html|og|53007|https://www.dropbox.com/scl/fi/tb321cf40o67mthfdr0td/FAC-003-Federated-SLM-Orchestration-Sovereign-Model-Pool-Architectural-Analysis.html?rlkey=vx2oswn5ehw6mmpgqomwj2hap&dl=0
+2026-09-26|optimo-agent-memory-architecture-triage-team-review-2026-09-26.html|/OptimoGenesis Private Review/optimo-agent-memory-architecture-triage-team-review-2026-09-26.html|og|73444|https://www.dropbox.com/scl/fi/eowfhr00otgdpid5jctzd/optimo-agent-memory-architecture-triage-team-review-2026-09-26.html?rlkey=l4c394wnzbpdvbpsx1vjba6gh&dl=0
+2026-09-10|optimo-procedural-graphs-genesis-private-review-2026-09-10-v2.html|/OptimoGenesis Private Review/optimo-procedural-graphs-genesis-private-review-2026-09-10-v2.html|og|41375|https://www.dropbox.com/scl/fi/qx59wd11o4j59jm5rkhym/optimo-procedural-graphs-genesis-private-review-2026-09-10-v2.html?rlkey=qj13jgd9xnjcdsfht10wpo05k&dl=0
+2026-09-10|optimo-procedural-graphs-genesis-private-review-2026-09-10.html|/OptimoGenesis Private Review/optimo-procedural-graphs-genesis-private-review-2026-09-10.html|og|25942|https://www.dropbox.com/scl/fi/4962hhk2t5y5pbf1v5lxx/optimo-procedural-graphs-genesis-private-review-2026-09-10.html?rlkey=yrv7mhoou4eboiteyggqeltha&dl=0
+2026-09-10|optimo-procedural-graphs-genesis-team-review-2026-09-10-v3.html|/OptimoGenesis Private Review/optimo-procedural-graphs-genesis-team-review-2026-09-10-v3.html|og|41437|https://www.dropbox.com/scl/fi/l6ydjgx0sqp8y6hydcei4/optimo-procedural-graphs-genesis-team-review-2026-09-10-v3.html?rlkey=y7cujicycb5v5453rlpan1w97&dl=0
+2026-09-10|optimo-procedural-graphs-genesis-team-review-2026-09-10-v4.html|/OptimoGenesis Private Review/optimo-procedural-graphs-genesis-team-review-2026-09-10-v4.html|og|42675|https://www.dropbox.com/scl/fi/hmtspm838w08ef7ww9df2/optimo-procedural-graphs-genesis-team-review-2026-09-10-v4.html?rlkey=0xgbd0wyagbs3tq6ru8bkxx09&dl=0
+2026-08-27|optimo_provenance_fabric_review.html|/OptimoGenesis Private Review/optimo_provenance_fabric_review.html|og|21891|https://www.dropbox.com/scl/fi/iaab3v54jd2a6j2m1bknv/optimo_provenance_fabric_review.html?rlkey=3zju09m7z3nfk47l62p3xxuwj&dl=0
+2026-08-02|OptimoLaunch_Magister_Integration_Analysis_2026-08-02.html|/OptimoLaunch_Magister_Integration_Analysis_2026-08-02.html|ol|19825|https://www.dropbox.com/scl/fi/q2ni1lepz09ocnjr3eatv/OptimoLaunch_Magister_Integration_Analysis_2026-08-02.html?rlkey=u726oz52zjbtl0yrvwmsmisgx&dl=0
+2026-07-24|OptimoMDM-Architecture-Direction-Brief-2026-07-24.html|/OptimoMDM-Architecture-Direction-Brief-2026-07-24.html|mdm|14937|https://www.dropbox.com/scl/fi/ujmr2hvd4ie5mj936h7t3/OptimoMDM-Architecture-Direction-Brief-2026-07-24.html?rlkey=twnz5149at7srim4tjfq4b56q&dl=0
+2026-10-05|optimoselect-optimomdm-product-definition-and-ifs-requirements-alignment.html|/optimoselect-optimomdm-product-definition-and-ifs-requirements-alignment.html|mdm|65450|https://www.dropbox.com/scl/fi/mfo8j6bjjkjjug5hg263y/optimoselect-optimomdm-product-definition-and-ifs-requirements-alignment.html?rlkey=z6nuxwibu43mlvkdrg38rl1ar&dl=0
+2026-10-05|optimoselect-product-definition-and-ifs-requirements-alignment.html|/optimoselect-product-definition-and-ifs-requirements-alignment.html|ind|70536|https://www.dropbox.com/scl/fi/g5g2qssxdgwxchgmac7hf/optimoselect-product-definition-and-ifs-requirements-alignment.html?rlkey=iwa5d8tpyejg29lgc11el0bjv&dl=0
+2026-09-22|SOC2 Simulated Audit - OptimoGenesis (2026-09-21).html|/OPTIMOV Private/Compliance Audits/SOC2 Simulated Audit - OptimoGenesis (2026-09-21).html|og|34269|https://www.dropbox.com/scl/fi/xt6nv89gmucvfj30fp9sr/SOC2-Simulated-Audit-OptimoGenesis-2026-09-21.html?rlkey=w3o2t7qb0yo6ve2lz78rh8f90&dl=0
+2026-07-28|ai-terminal-assessment-2026-07-28.html|/OPTIMOV Private/Ideation - AI Financial Terminal/ai-terminal-assessment-2026-07-28.html|ops|11938|https://www.dropbox.com/scl/fi/77c8fdas18rtvuqtcltyi/ai-terminal-assessment-2026-07-28.html?rlkey=mjanvp0mkpvs9v0rfwkiaac2f&dl=0
+2026-08-12|optimo-wrapup-complete-2026-08-11.html|/OptimoVentures/Reports/optimo-wrapup-complete-2026-08-11.html|ops|52319|https://www.dropbox.com/scl/fi/vp0a2hfx5wahwe7wdtr3w/optimo-wrapup-complete-2026-08-11.html?rlkey=qywjky33nrcz4g8l2da4vry81&dl=0
+2026-08-21|optimocortex-gateway-substrate-proposal-2026-08-21.html|/OptimoVentures/Reports/optimocortex-gateway-substrate-proposal-2026-08-21.html|ocx|45724|https://www.dropbox.com/scl/fi/gsrazot172dgoiuqv8sc9/optimocortex-gateway-substrate-proposal-2026-08-21.html?rlkey=j42jj5710hwttzixeeejfzxpv&dl=0
+2026-08-18|optimocortex-rag-differential-2026-08-18.html|/OptimoVentures/Reports/optimocortex-rag-differential-2026-08-18.html|ocx|47453|https://www.dropbox.com/scl/fi/wu10qzss8v23sz2lwtu02/optimocortex-rag-differential-2026-08-18.html?rlkey=wgj28qh4ef4v8oi55f60098kf&dl=0
+2026-08-12|shepards-law-manufactured-distance-2026-08-11.html|/OptimoVentures/Reports/shepards-law-manufactured-distance-2026-08-11.html|ops|35574|https://www.dropbox.com/scl/fi/7olzkiziypcsy6w9b6pr7/shepards-law-manufactured-distance-2026-08-11.html?rlkey=0oro1q1ijthla6xreo4vli3ko&dl=0
+2026-07-27|optimo-wrapup-brief-2026-07-26.html|/OptimoVentures/skills/optimo-wrapup/optimo-wrapup-brief-2026-07-26.html|ops|22102|https://www.dropbox.com/scl/fi/rcven4st24ojwl9p9ensa/optimo-wrapup-brief-2026-07-26.html?rlkey=4ic9ftmqbyxn9atj689o2yl96&dl=0
+2026-06-28|rcm-comprehensive-analysis.html|/rcm-comprehensive-analysis.html|rcm|41069|https://www.dropbox.com/scl/fi/jenec2tuqkg64km8xgcpq/rcm-comprehensive-analysis.html?rlkey=4d8vnc87u6bn8erz1hx7nlwaz&dl=0
+2026-08-07|rcm-optimocanon-architecture-dashboard (1).html|/rcm-optimocanon-architecture-dashboard (1).html|rcm|32293|https://www.dropbox.com/scl/fi/onk7l31cvzspoax1xy2wr/rcm-optimocanon-architecture-dashboard-1.html?rlkey=f05r0g491g746ld1iurplxxpz&dl=0
+2026-08-18|agc-email-hunt-report.html|/Reports/agc-email-hunt-report.html|ops|32771|https://www.dropbox.com/scl/fi/ib3vaxxkw2rzwxh7k1omc/agc-email-hunt-report.html?rlkey=xy7tr40mbxnxffrny1v4cv4qz&dl=0
+2026-09-08|algorithmic-commerce-governance-fac-002-2026-09-07.html|/Reports/algorithmic-commerce-governance-fac-002-2026-09-07.html|og|57426|https://www.dropbox.com/scl/fi/ta13arrsjdkcfhy31hlvk/algorithmic-commerce-governance-fac-002-2026-09-07.html?rlkey=fzw853cp7qfrvmwcbou6p3hzg&dl=0
+2026-09-03|bluequbit-quantum-leverage-analysis-2026-09-03.html|/Reports/bluequbit-quantum-leverage-analysis-2026-09-03.html|ops|28149|https://www.dropbox.com/scl/fi/jq6kr4odrw12hwftoabe9/bluequbit-quantum-leverage-analysis-2026-09-03.html?rlkey=ce7rjm2ap8195m8w4xubv9m41&dl=0
+2026-08-01|council-review-customer-zero-blueprint-2026-08-01.html|/Reports/council-review-customer-zero-blueprint-2026-08-01.html|cz|25438|https://www.dropbox.com/scl/fi/wiba7llxuv8qq8wavwu1a/council-review-customer-zero-blueprint-2026-08-01.html?rlkey=noe4qkyh4mmxcd783h6bkkznd&dl=0
+2026-08-06|gutwise-build-state-2026-08-05.html|/Reports/gutwise-build-state-2026-08-05.html|gw|7543|https://www.dropbox.com/scl/fi/rimwcp899ezvxee4r71fw/gutwise-build-state-2026-08-05.html?rlkey=nh16h66q149e07vrcgxemxuyb&dl=0
+2026-07-28|gutwise-hlds-assessment-2026-07-28.html|/Reports/GutWise/gutwise-hlds-assessment-2026-07-28.html|gw|24334|https://www.dropbox.com/scl/fi/l0qxfszwse4ebbmx4ydh6/gutwise-hlds-assessment-2026-07-28.html?rlkey=3mpkfq71pnwjovm9fd1lj1ebm&dl=0
+2026-09-04|IBM_watsonx_vs_OptimoGenesis_Architecture_Review.html|/Reports/IBM_watsonx_vs_OptimoGenesis_Architecture_Review.html|og|22862|https://www.dropbox.com/scl/fi/6kkj8xcto5e43f4pf6sd6/IBM_watsonx_vs_OptimoGenesis_Architecture_Review.html?rlkey=qtgxtac3w5ahckbiucrjuj8l2&dl=0
+2026-09-17|ifs-section11-partner-prep.html|/Reports/ifs-section11-partner-prep.html|ind|37314|https://www.dropbox.com/scl/fi/u8nses620iy1kqcjf040x/ifs-section11-partner-prep.html?rlkey=1t18q94ui03f0kp0ny9jto7tr&dl=0
+2026-07-19|may-river-capital-hubspot-prospect-hierarchy-2026-07-19.html|/Reports/may-river-capital-hubspot-prospect-hierarchy-2026-07-19.html|ind|15996|https://www.dropbox.com/scl/fi/54kdpoeub1bfrzbfsqair/may-river-capital-hubspot-prospect-hierarchy-2026-07-19.html?rlkey=mazf3ylzkggbs7o6eagkd85a2&dl=0
+2026-09-23|memory-register.html|/Reports/memory-register.html|ops|46849|https://www.dropbox.com/scl/fi/a7cgq67pjx6c5af1bvel4/memory-register.html?rlkey=vjfgmait1hn0cm6xuy3lz522g&dl=0
+2026-09-23|memory-report-2026-09-23-public.html|/Reports/memory-report-2026-09-23-public.html|ops|55934|https://www.dropbox.com/scl/fi/5pg5pvmagmcr74crwbipy/memory-report-2026-09-23-public.html?rlkey=5vwnqd4541u0qfcxg2ugqhvq9&dl=0
+2026-07-27|HLDS-Assessment-2026-07-27.html|/Reports/MolDesignAI/HLDS-Assessment-2026-07-27.html|mol|45610|https://www.dropbox.com/scl/fi/d2m8dlgz4f38djhbz8hca/HLDS-Assessment-2026-07-27.html?rlkey=ayh7zhdb4p1ulu7kv4dz8m6c6&dl=0
+2026-07-20|mrc-optimoselect-deployment-analysis-2026-07-19.html|/Reports/mrc-optimoselect-deployment-analysis-2026-07-19.html|ind|34441|https://www.dropbox.com/scl/fi/eyxy8id4lar18pkbs8f7o/mrc-optimoselect-deployment-analysis-2026-07-19.html?rlkey=wqbo7dsdij0k4nb6o71tohpec&dl=0
+2026-09-07|optimo-cortex-ai-orchestration-market-comparison-2026-09-07-v2.html|/Reports/optimo-cortex-ai-orchestration-market-comparison-2026-09-07-v2.html|ocx|24101|https://www.dropbox.com/scl/fi/2rwkyswy59w592czeicz6/optimo-cortex-ai-orchestration-market-comparison-2026-09-07-v2.html?rlkey=3pjunj9vqnku9czandeg4hp1t&dl=0
+2026-09-07|optimo-cortex-ai-orchestration-market-comparison-2026-09-07-v3.html|/Reports/optimo-cortex-ai-orchestration-market-comparison-2026-09-07-v3.html|ocx|23555|https://www.dropbox.com/scl/fi/r7ymqee79w7e7fb7dv1oh/optimo-cortex-ai-orchestration-market-comparison-2026-09-07-v3.html?rlkey=43pyubc1ywjpg9wkcs0l096k4&dl=0
+2026-09-07|optimo-cortex-ai-orchestration-market-comparison-2026-09-07-v4.html|/Reports/optimo-cortex-ai-orchestration-market-comparison-2026-09-07-v4.html|ocx|43209|https://www.dropbox.com/scl/fi/g50gatvpghmg79rr6j22m/optimo-cortex-ai-orchestration-market-comparison-2026-09-07-v4.html?rlkey=muuw3xks2qotpd11iu9c9x3ys&dl=0
+2026-09-07|optimo-cortex-ai-orchestration-market-comparison-2026-09-07-v5.html|/Reports/optimo-cortex-ai-orchestration-market-comparison-2026-09-07-v5.html|ocx|52974|https://www.dropbox.com/scl/fi/hed88n0d57xte1np2a5f1/optimo-cortex-ai-orchestration-market-comparison-2026-09-07-v5.html?rlkey=1o6kmnp0chjkd3w4mtv5wz2a1&dl=0
+2026-09-07|optimo-cortex-ai-orchestration-market-comparison-2026-09-07-v6.html|/Reports/optimo-cortex-ai-orchestration-market-comparison-2026-09-07-v6.html|ocx|55271|https://www.dropbox.com/scl/fi/lciw0s7kejutj0pm3d1iv/optimo-cortex-ai-orchestration-market-comparison-2026-09-07-v6.html?rlkey=9wj1ww10lyk72su8awzvwk1jc&dl=0
+2026-09-07|optimo-cortex-ai-orchestration-market-comparison-2026-09-07.html|/Reports/optimo-cortex-ai-orchestration-market-comparison-2026-09-07.html|ocx|23526|https://www.dropbox.com/scl/fi/rk8qyz52ki6tqbfvydilr/optimo-cortex-ai-orchestration-market-comparison-2026-09-07.html?rlkey=lsym9eijmpr4z839vp5fucvce&dl=0
+2026-09-07|optimo-genesis-unified-platform-market-venture-thesis-2026-09-07-v7.html|/Reports/optimo-genesis-unified-platform-market-venture-thesis-2026-09-07-v7.html|og|73473|https://www.dropbox.com/scl/fi/pz5tnss11cszyozr79lcs/optimo-genesis-unified-platform-market-venture-thesis-2026-09-07-v7.html?rlkey=lqa1y7oh304n1o4f1c9i232w2&dl=0
+2026-07-17|optimo-local-dev-setup-briefing-2026-07-17.html|/Reports/optimo-local-dev-setup-briefing-2026-07-17.html|ops|10630|https://www.dropbox.com/scl/fi/ed1krps1en0s7rhf1affe/optimo-local-dev-setup-briefing-2026-07-17.html?rlkey=zqly6fq4n5soumz56ms9dnhs4&dl=0
+2026-09-11|optimo_cortex_population_scaled_cognitive_fabric_2026-09-10_v3_agile-pillar.html|/Reports/optimo_cortex_population_scaled_cognitive_fabric_2026-09-10_v3_agile-pillar.html|ocx|101929|https://www.dropbox.com/scl/fi/grfwedsme8mwkisj9t49b/optimo_cortex_population_scaled_cognitive_fabric_2026-09-10_v3_agile-pillar.html?rlkey=o7fiddhcyl4k9uy20diwk6mb1&dl=0
+2026-09-11|optimo_cortex_population_scaled_cognitive_fabric_2026-09-10_v4_ant-ideation-image.html|/Reports/optimo_cortex_population_scaled_cognitive_fabric_2026-09-10_v4_ant-ideation-image.html|ocx|388585|https://www.dropbox.com/scl/fi/w69e5e8ibju7ykhhfjrm7/optimo_cortex_population_scaled_cognitive_fabric_2026-09-10_v4_ant-ideation-image.html?rlkey=yty6bzwe1byc0tg9denv2vo3o&dl=0
+2026-09-02|optimocortex-state-check-2026-09-02.html|/Reports/optimocortex-state-check-2026-09-02.html|ocx|8345|https://www.dropbox.com/scl/fi/urt6qqq6c7bf49gnq4yd0/optimocortex-state-check-2026-09-02.html?rlkey=g3er1p93abt519bf449ewkuah&dl=0
+2026-09-07|optimogenesis-moldesignai-immunodesign-thesis-2026-09-07-v2.html|/Reports/optimogenesis-moldesignai-immunodesign-thesis-2026-09-07-v2.html|og|28439|https://www.dropbox.com/scl/fi/busvnqx7zj19ujtertbh3/optimogenesis-moldesignai-immunodesign-thesis-2026-09-07-v2.html?rlkey=5ph80cbqb32rooy7zjytnympc&dl=0
+2026-09-07|optimogenesis-moldesignai-immunodesign-thesis-2026-09-07.html|/Reports/optimogenesis-moldesignai-immunodesign-thesis-2026-09-07.html|og|28712|https://www.dropbox.com/scl/fi/tk5bkz9sp7qsvqtume82f/optimogenesis-moldesignai-immunodesign-thesis-2026-09-07.html?rlkey=hl14dk7g4t0vg1p2b5bdchkgk&dl=0
+2026-08-25|optimolaunch-migration-plan-2026-08-24.html|/Reports/optimolaunch-migration-plan-2026-08-24.html|ol|39990|https://www.dropbox.com/scl/fi/tr67rt28b8vxus0dwitf6/optimolaunch-migration-plan-2026-08-24.html?rlkey=j4u46rz8xhkqwx3xkyckoago4&dl=0
+2026-09-06|OptimoMDM_OptimoSelect_IFS_Alignment_2026-09-02.html|/Reports/OptimoMDM_OptimoSelect_IFS_Alignment_2026-09-02.html|mdm|6685|https://www.dropbox.com/scl/fi/lh4x0m3b7ipoeurauvp9q/OptimoMDM_OptimoSelect_IFS_Alignment_2026-09-02.html?rlkey=4whqf1r7y9r0ftysa58tvv43x&dl=0
+2026-09-06|OptimoMDM_Product_Definition_IFS_Alignment_2026-09-02.html|/Reports/OptimoMDM_Product_Definition_IFS_Alignment_2026-09-02.html|mdm|55636|https://www.dropbox.com/scl/fi/71lakktwl3mdtqz0tnu3d/OptimoMDM_Product_Definition_IFS_Alignment_2026-09-02.html?rlkey=r6455kpmz0pm8dux1rv2edjle&dl=0
+2026-07-20|executive-summary.html|/Reports/OptimoPR/2026-07-20/executive-summary.html|pr|14561|https://www.dropbox.com/scl/fi/z0aj7zcbm8i6dgxhnxsge/executive-summary.html?rlkey=rhr3mfznc4vcyfx90ixamuc5w&dl=0
+2026-07-20|rcm-embedded-ip-analysis.html|/Reports/OptimoPR/2026-07-20/rcm-embedded-ip-analysis.html|pr|13852|https://www.dropbox.com/scl/fi/wap78x3as2glrp5ab5g8q/rcm-embedded-ip-analysis.html?rlkey=cpv5der4or06cvtibi2s35i0i&dl=0
+2026-07-15|OptimoRenu-Combined-Assessment-2026-07-15.html|/Reports/optimorenu/OptimoRenu-Combined-Assessment-2026-07-15.html|renu|26300|https://www.dropbox.com/scl/fi/9x3s4l7i77xavs5s9t2sv/OptimoRenu-Combined-Assessment-2026-07-15.html?rlkey=ssk9a0rpthzfwspeogw5pive5&dl=0
+2026-09-15|optimoselect-clarity-hub-security-scan-2026-09-15.html|/Reports/optimoselect-clarity-hub-security-scan-2026-09-15.html|ind|16364|https://www.dropbox.com/scl/fi/vkba4tyht83wf20qj78ae/optimoselect-clarity-hub-security-scan-2026-09-15.html?rlkey=ey9iy96i5yzf54jhvv0nj3vmo&dl=0
+2026-09-18|ifs-fr-coverage-assessment-2026-09-18.html|/Reports/OptimoSelect/ifs-fr-coverage-assessment-2026-09-18.html|ind|38549|https://www.dropbox.com/scl/fi/qipja0azo8onlyvk6omn7/ifs-fr-coverage-assessment-2026-09-18.html?rlkey=mi3ekmxm7m8ujs0k7c8hnf3ij&dl=0
+2026-09-18|ifs-optimo-kickoff-agenda-2026-09-18.html|/Reports/OptimoSelect/ifs-optimo-kickoff-agenda-2026-09-18.html|ind|18420|https://www.dropbox.com/scl/fi/syqrqd2lk3ngmaf4c9q7d/ifs-optimo-kickoff-agenda-2026-09-18.html?rlkey=c1vdthrpm8ss8g566k9mzd9st&dl=0
+2026-09-06|OptimoSelect_Product_Definition_IFS_Alignment_2026-09-02.html|/Reports/OptimoSelect_Product_Definition_IFS_Alignment_2026-09-02.html|ind|64006|https://www.dropbox.com/scl/fi/2ydf9evaax7stzbcpwrry/OptimoSelect_Product_Definition_IFS_Alignment_2026-09-02.html?rlkey=mawf91zjjvvuva3bhwl24ycap&dl=0
+2026-09-05|optimo-coral-governed-continuous-optimization-team-review-2026-09-05-v8-render.html|/Reports/Platform (Codex + Cortex + Agile)/2026-09-05/optimo-coral-governed-continuous-optimization-team-review-2026-09-05-v8-render.html|ocx|20527|https://www.dropbox.com/scl/fi/mlg3hoxorhzb6s1jzlnot/optimo-coral-governed-continuous-optimization-team-review-2026-09-05-v8-render.html?rlkey=qyp8axs12yws1x3tk45l0suva&dl=0
+2026-09-05|optimo-coral-governed-continuous-optimization-team-review-2026-09-05-v8.html|/Reports/Platform (Codex + Cortex + Agile)/2026-09-05/optimo-coral-governed-continuous-optimization-team-review-2026-09-05-v8.html|ocx|684|https://www.dropbox.com/scl/fi/b0thi9gu00nkcl2syu1qm/optimo-coral-governed-continuous-optimization-team-review-2026-09-05-v8.html?rlkey=hhjrzwmfh3f335qfcu09bzdri&dl=0
+2026-09-14|optimo-genesis-immutable-silicon-guardian-thesis-wip-2026-09-14.html|/Reports/Platform (Codex + Cortex + Agile)/optimo-genesis-immutable-silicon-guardian-thesis-wip-2026-09-14.html|ocx|55039|https://www.dropbox.com/scl/fi/j2e20m2zww26m6ebyihht/optimo-genesis-immutable-silicon-guardian-thesis-wip-2026-09-14.html?rlkey=sku3acjnt603tir95zqbwzj7e&dl=0
+2026-07-18|skillspector-comprehensive-solution-document.html|/Reports/SkillSpector/2026-07-17/skillspector-comprehensive-solution-document.html|spec|32093|https://www.dropbox.com/scl/fi/p7ow72biib9xrnjxwu77q/skillspector-comprehensive-solution-document.html?rlkey=vxc8u82n519jnfyxfxfq6h95a&dl=0
+2026-07-18|skillspector-deployment-audit-report.html|/Reports/SkillSpector/2026-07-17/skillspector-deployment-audit-report.html|spec|12934|https://www.dropbox.com/scl/fi/w3wr0id4x2vsz6bmti59d/skillspector-deployment-audit-report.html?rlkey=sj5zivnu3hb50kt7jdubu4601&dl=0
+2026-07-18|optimo-rcm-skillspectra-analysis.html|/Reports/SkillSpector/2026-07-18/optimo-rcm-skillspectra-analysis.html|rcm|9891|https://www.dropbox.com/scl/fi/o5z76d2i4c8waubcfx6jy/optimo-rcm-skillspectra-analysis.html?rlkey=7pw5qqroe658nr01vveucs7sd&dl=0
+2026-07-24|synesis-7-day-build-completion-2026-07-24.html|/Reports/TelosAI/synesis-7-day-build-completion-2026-07-24.html|telos|6251|https://www.dropbox.com/scl/fi/ihobol564np62a40f4xo0/synesis-7-day-build-completion-2026-07-24.html?rlkey=37ve2ro7jfyhl2q65ya2r11uo&dl=0
+2026-07-24|synesis-7-day-build-plan-2026-07-23.html|/Reports/TelosAI/synesis-7-day-build-plan-2026-07-23.html|telos|16176|https://www.dropbox.com/scl/fi/9pny8ao3hqadjrgoyca01/synesis-7-day-build-plan-2026-07-23.html?rlkey=8p1m2a8828q4uyc8x5iqo24ls&dl=0
+2026-07-24|synesis-framework-ip-compliance-2026-07-24.html|/Reports/TelosAI/synesis-framework-ip-compliance-2026-07-24.html|telos|1493|https://www.dropbox.com/scl/fi/brp3s8rl0c7qjhvh0xzgv/synesis-framework-ip-compliance-2026-07-24.html?rlkey=m7n0wmg62vshpccpc0qzluuv8&dl=0
+2026-07-24|synesis-overhaul-assessment-2026-07-23.html|/Reports/TelosAI/synesis-overhaul-assessment-2026-07-23.html|telos|15180|https://www.dropbox.com/scl/fi/r43hrwt46vl50bb6usd30/synesis-overhaul-assessment-2026-07-23.html?rlkey=txm3anjkkdi6ecn7htdss1yqg&dl=0
+2026-07-23|synesis-overhaul-assessment-report-2026-07-23.html|/Reports/TelosAI/synesis-overhaul-assessment-report-2026-07-23.html|telos|393|https://www.dropbox.com/scl/fi/m66l6sob2itw1ayfwcsbp/synesis-overhaul-assessment-report-2026-07-23.html?rlkey=3yxfce3et1o995p9keuixrbzp&dl=0
+2026-07-17|telosai-build-memory-2026-07-16.html|/Reports/TelosAI/telosai-build-memory-2026-07-16.html|telos|15641|https://www.dropbox.com/scl/fi/69nwugydrfgopidxfuxwd/telosai-build-memory-2026-07-16.html?rlkey=6ovxd4rfqdmwtk987tovj1pkr&dl=0
+2026-08-12|telosai-launch-readiness-reconciliation-2026-08-12.html|/Reports/TelosAI/telosai-launch-readiness-reconciliation-2026-08-12.html|telos|42021|https://www.dropbox.com/scl/fi/10fhomlfl0we793v56xg3/telosai-launch-readiness-reconciliation-2026-08-12.html?rlkey=fuw51queo41mp6ajs0mh0yb26&dl=0
+2026-07-27|vasculai-hlds-assessment-2026-07-27.html|/Reports/vasculai/vasculai-hlds-assessment-2026-07-27.html|vas|60822|https://www.dropbox.com/scl/fi/5oznvquux5d3c290cji6s/vasculai-hlds-assessment-2026-07-27.html?rlkey=9fy9ifypm5r0skgpxpi9k8kix&dl=0
+2026-06-24|slack-access-review-2026-06-24.html|/slack-access-review-2026-06-24.html|sec|22543|https://www.dropbox.com/scl/fi/gc3xal67p0mbgkhly5xxl/slack-access-review-2026-06-24.html?rlkey=qsfuitpzvos55qiviolo5zr6f&dl=0
+2026-07-12|Synesis_Monetization_Briefing.html|/Synesis_Monetization_Briefing.html|telos|19096|https://www.dropbox.com/scl/fi/k1ey5y9uwoy6ln81ej3fv/Synesis_Monetization_Briefing.html?rlkey=p28fapq5q9mrqjoo71exds7ep&dl=0
+2026-07-11|telosai-cognitive-core-build-plan-v3-2026-07-10.html|/telosai-cognitive-core-build-plan-v3-2026-07-10.html|telos|22047|https://www.dropbox.com/scl/fi/7plyzgt4l5kaibcksqdnt/telosai-cognitive-core-build-plan-v3-2026-07-10.html?rlkey=w0cjuswpmjdaujh7sli2fnflj&dl=0
+2026-07-11|telosai-cognitive-core-libraries-review-2026-07-11.html|/telosai-cognitive-core-libraries-review-2026-07-11.html|telos|81336|https://www.dropbox.com/scl/fi/a9zjrhw6zmrcenkxsh7hq/telosai-cognitive-core-libraries-review-2026-07-11.html?rlkey=m5wtjaspr52is7rxjb6n1ld1r&dl=0
+2026-08-19|FDA-Comment-DRAFT-v1.0-2026-08-19.html|ns:14941128451//FDA-Comment-DRAFT-v1.0-2026-08-19.html|fda|19350|https://www.dropbox.com/scl/fi/jlyae1ymgk7p10h4c2gli/FDA-Comment-DRAFT-v1.0-2026-08-19.html?rlkey=kyw8mu1jt3m1u7kp9yf757c9j&dl=0
+2026-08-19|FDA-Comment-DRAFT-v1.1-2026-08-19.html|ns:14941128451//FDA-Comment-DRAFT-v1.1-2026-08-19.html|fda|21074|https://www.dropbox.com/scl/fi/n3dqiu3yw57zzalkj652a/FDA-Comment-DRAFT-v1.1-2026-08-19.html?rlkey=vsnf7kejtpqr0im000u32r4gp&dl=0`);
+const LOCAL = parseL(`2026-10-14|memory-report-2026-10-14.html|C:\\Users\\joelp\\reports\\memory-report-2026-10-14.html|47778|0
+2026-10-06|memory-report-2026-10-06.html|C:\\Users\\joelp\\reports\\memory-report-2026-10-06.html|78644|0
+2026-09-27|memory-report-2026-09-27.html|C:\\Users\\joelp\\reports\\memory-report-2026-09-27.html|44128|0
+2026-09-21|optimo-ventures-historical-spend.html|C:\\Users\\joelp\\reports\\optimo-ventures-finance\\optimo-ventures-historical-spend.html|43217|0
+2026-09-21|report_template.html|C:\\Users\\joelp\\reports\\optimo-ventures-finance\\report_template.html|30339|0
+2026-09-12|memory-report-2026-09-12.html|C:\\Users\\joelp\\reports\\memory-report-2026-09-12.html|53000|0
+2026-09-12|optimogenesis-math-formalization-2026-09-12.html|C:\\Users\\joelp\\reports\\optimogenesis-math-formalization-2026-09-12.html|25755|0
+2026-09-06|memory-report-2026-09-05.html|C:\\Users\\joelp\\reports\\memory-report-2026-09-05.html|138169|0
+2026-09-01|review-optimomdm-midpoint-2026-09-01.html|C:\\Users\\joelp\\reports\\OptimoMDM\\2026-09-01\\review-optimomdm-midpoint-2026-09-01.html|53207|0
+2026-08-28|optimo-dev-environment-architecture-2026-08-28.html|C:\\Users\\joelp\\reports\\optimo-dev-environment-architecture-2026-08-28.html|32688|0
+2026-08-28|optimo-dev-environment-artifact.html|C:\\Users\\joelp\\reports\\optimo-dev-environment-artifact.html|15629|0
+2026-08-28|optimo-dev-stack-architecture-artifact.html|C:\\Users\\joelp\\reports\\optimo-dev-stack-architecture-artifact.html|25690|0
+2026-08-27|optimo-daily-assessment-2026-08-27.html|C:\\Users\\joelp\\reports\\Optimo Ventures (Parent)\\2026-08-27\\optimo-daily-assessment-2026-08-27.html|41087|0
+2026-08-25|optimo-daily-assessment-2026-08-25.html|C:\\Users\\joelp\\reports\\Optimo Ventures (Parent)\\2026-08-25\\optimo-daily-assessment-2026-08-25.html|61329|0
+2026-08-01|optimogenesis-council-evaluation-2026-08-01.html|C:\\Users\\joelp\\reports\\optimogenesis-council-evaluation-2026-08-01.html|52064|0
+2026-07-31|memory-report-2026-07-31.html|C:\\Users\\joelp\\reports\\memory-report-2026-07-31.html|41569|0
+2026-07-21|guidohatziz-venture-brief-2026-07-21.html|C:\\Users\\joelp\\reports\\guidohatziz\\guidohatziz-venture-brief-2026-07-21.html|34546|0
+2026-07-20|narrative-outputs-technical-analysis.html|C:\\Users\\joelp\\reports\\optimo-pr-accelerator\\narrative-outputs-technical-analysis.html|36359|0
+2026-07-20|pipeline-sequence-analysis.html|C:\\Users\\joelp\\reports\\optimo-pr-accelerator\\pipeline-sequence-analysis.html|19765|0
+2026-07-20|rcm-analysis-report.html|C:\\Users\\joelp\\reports\\optimo-pr-accelerator\\rcm-analysis-report.html|38562|0
+2026-07-20|rcm-spec-implementation-audit.html|C:\\Users\\joelp\\reports\\optimo-pr-accelerator\\rcm-spec-implementation-audit.html|39352|0
+2026-07-20|rcm-spec-vs-skill-audit.html|C:\\Users\\joelp\\reports\\optimo-pr-accelerator\\rcm-spec-vs-skill-audit.html|38257|0
+2026-07-20|triage-assessment-report.html|C:\\Users\\joelp\\reports\\optimo-pr-accelerator\\triage-assessment-report.html|38410|0
+2026-07-14|optimo-ventures-panoramic-analysis-2026-07-14.html|C:\\Users\\joelp\\reports\\optimo-ventures\\optimo-ventures-panoramic-analysis-2026-07-14.html|79256|0
+2026-07-11|telosai-static-dynamic-uiux-assessment-report.html|C:\\Users\\joelp\\reports\\TelosAI\\2026-07-11\\telosai-static-dynamic-uiux-assessment-report.html|17140|0
+2026-07-09|gutwise-production-fixes-2026-07-09.html|C:\\Users\\joelp\\reports\\gutwise-production-fixes-2026-07-09.html|30638|0
+2026-07-09|memory-report-2026-07-09-public.html|C:\\Users\\joelp\\reports\\memory-report-2026-07-09-public.html|37213|0
+2026-07-09|memory-report-2026-07-09.html|C:\\Users\\joelp\\reports\\memory-report-2026-07-09.html|38199|0
+2026-07-09|optimo-ai-memory-skills-architecture-founder-review.html|C:\\Users\\joelp\\reports\\optimo-ai-memory-skills-architecture-founder-review.html|2311|0
+2026-07-09|memory-report-2026-07-09.html|C:\\Users\\joelp\\reports\\Optimo Ventures (Parent)\\2026-07-09\\memory-report-2026-07-09.html|37213|0
+2026-07-09|gutwise-production-fixes-2026-07-09.html|C:\\Users\\joelp\\reports\\GutWise Journey\\2026-07-09\\gutwise-production-fixes-2026-07-09.html|30638|0
+2026-07-08|optimo-rcm-skill-analysis-2026-07-08.html|C:\\Users\\joelp\\reports\\optimo-rcm-skill-analysis-2026-07-08.html|24306|0
+2026-07-07|claude-code-memory-architecture-report.html|C:\\Users\\joelp\\reports\\Platform\\2026-07-07\\claude-code-memory-architecture-report.html|18938|0
+2026-07-04|claude-code-cli-architecture-guide-report.html|C:\\Users\\joelp\\reports\\Platform\\2026-07-04\\claude-code-cli-architecture-guide-report.html|44775|0
+2026-07-04|dotclaude-gap-analysis-final-report.html|C:\\Users\\joelp\\reports\\Platform\\2026-07-04\\dotclaude-gap-analysis-final-report.html|7143|0
+2026-07-04|dotclaude-gap-analysis-report.html|C:\\Users\\joelp\\reports\\Platform\\2026-07-04\\dotclaude-gap-analysis-report.html|10177|0
+2026-07-04|optimoland-vercel-investigation-report.html|C:\\Users\\joelp\\reports\\OptimoLand\\2026-07-04\\optimoland-vercel-investigation-report.html|16388|0
+2026-07-04|optimoevidence-vercel-misalignment-report.html|C:\\Users\\joelp\\reports\\OptimoEvidence\\2026-07-04\\optimoevidence-vercel-misalignment-report.html|11220|0
+2026-07-04|rcm-analysis-report.html|C:\\Users\\joelp\\reports\\Optimo Ventures (Parent)\\2026-07-02\\rcm-analysis-report.html|47444|0`);
+const UPDATED = "2026-10-14";
+
+function parseD(s){return s.trim().split("\n").filter(Boolean).map(function(l){var p=l.split("|");var o={d:p[0],n:p[1],p:p[2],t:p[3],s:+p[4]};if(p[5])o.u=p[5];return o;});}
+function parseL(s){return s.trim().split("\n").filter(Boolean).map(function(l){var p=l.split("|");return {d:p[0],n:p[1],p:p[2],s:+p[3],c:p[4]==="1"};});}
+
+const TOPICS = [["ait","AI Training"],["cz","Customer Zero"],["fda","FDA Docket"],["gw","GutWise"],["ind","Industrial · IFS · MRC"],["mol","MolDesignAI"],["ops","Operations"],["adv","OptimoAdvocate"],["ocx","OptimoCortex"],["exp","OptimoExpanse"],["og","OptimoGenesis"],["ol","OptimoLaunch"],["mdm","OptimoMDM"],["pr","OptimoPR"],["renu","OptimoRenu"],["rcm","RCM & Triage"],["sec","Security & Governance"],["spec","SkillSpector"],["telos","TelosAI"],["vas","VasculAI"],["web","Web Saves"]];
+const LABEL = Object.fromEntries(TOPICS);
+const state = {q:"", topic:"all", sort:"topic"};
+const FRAMED = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+function wireOpen(a, href){
+  a.href = href;
+  a.target = "_blank";
+  a.rel = "noopener";
+  if (FRAMED){
+    a.onclick = (e) => {
+      e.preventDefault();
+      const w = window.open(href, "_blank", "noopener");
+      if (!w) copy(href, "Popup blocked — link copied. Paste it in a new tab to open.");
+    };
+  }
+}
+const groups = [];
+(function(){
+  const known = new Set(TOPICS.map(t=>t[0]));
+  for (const [k,label] of TOPICS){
+    groups.push({k,label,files:DATA.filter(f=>f.t===k).sort((a,b)=>b.d.localeCompare(a.d))});
+  }
+  const orphan = DATA.filter(f=>!known.has(f.t));
+  if (orphan.length) groups.push({k:"other",label:"Other",files:orphan.slice().sort((a,b)=>b.d.localeCompare(a.d))});
+})();
+
+function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+function PURL(p){return "https://www.dropbox.com/preview"+p;}
+function hrefOf(f){return f.u || PURL(f.p);}
+function fmtSize(s){if(s<1024)return s+" B";if(s<1048576)return (s/1024).toFixed(1)+" KB";return (s/1048576).toFixed(1)+" MB";}
+function fmtDate(d){return new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});}
+function fmtRange(files){const ds=files.map(f=>f.d).sort();return ds.length===1?fmtDate(ds[0]):fmtDate(ds[0])+" – "+fmtDate(ds[ds.length-1]);}
+
+function renderStats(){
+  document.getElementById("st-files").textContent = DATA.length;
+  document.getElementById("st-topics").textContent = groups.filter(g=>g.files.length).length;
+  document.getElementById("st-size").textContent = fmtSize(DATA.reduce((a,f)=>a+f.s,0));
+  document.getElementById("st-span").textContent = fmtRange(DATA);
+  document.getElementById("st-local").textContent = LOCAL.length;
+  document.getElementById("updated").textContent = UPDATED;
+}
+
+function renderToc(){
+  const toc = document.getElementById("toc");
+  toc.innerHTML = "";
+  const mk = (k,label,count) => {
+    const b = el("button","toc-item"+(state.topic===k?" on":""),label);
+    const c = el("span","badge",String(count));
+    b.appendChild(c);
+    b.onclick = () => selectTopic(k);
+    return b;
+  };
+  toc.appendChild(mk("all","All reports",DATA.length));
+  for (const g of groups){ if(!g.files.length) continue; toc.appendChild(mk(g.k,g.label,g.files.length)); }
+
+  const chips = document.getElementById("chips");
+  chips.innerHTML = "";
+  const mkChip = (k,label,count) => {
+    const b = el("button","chip"+(state.topic===k?" on":""),label+" · "+count);
+    b.onclick = () => selectTopic(k);
+    return b;
+  };
+  chips.appendChild(mkChip("all","All",DATA.length));
+  for (const g of groups){ if(!g.files.length) continue; chips.appendChild(mkChip(g.k,g.label,g.files.length)); }
+}
+
+function renderLocal(){
+  const q = state.q.trim().toLowerCase();
+  const list = document.getElementById("list");
+  if (state.topic!=="all") return 0;
+  const files = LOCAL.filter(f=>!q || (f.n+" "+f.p).toLowerCase().includes(q));
+  if (!files.length) return 0;
+  const sec = el("section","group local");
+  sec.id = "g-local";
+  const head = el("div","group-head");
+  head.appendChild(el("h2",null,"Local drive"));
+  head.appendChild(el("span","g-meta", files.length+" "+(files.length===1?"file":"files")+" · not in Dropbox yet · upload case by case"));
+  sec.appendChild(head);
+  const bar = el("div","local-bar");
+  const upSel = el("button","btn upload","Upload selected");
+  upSel.onclick = () => {
+    const sel = [...sec.querySelectorAll("input[type=checkbox]:checked")].map(i=>i.dataset.path);
+    if (!sel.length){ toast("Select one or more files first"); return; }
+    copy("upload-reports "+sel.map(s=>'"'+s+'"').join(" "),"Upload request copied — paste it in Claude Code");
+  };
+  bar.appendChild(upSel);
+  sec.appendChild(bar);
+  for (const f of files){
+    const row = el("div","file lrow");
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.dataset.path = f.p;
+    cb.setAttribute("aria-label","Select "+f.n);
+    cb.disabled = !!f.c;
+    const left = el("div");
+    left.appendChild(el("div","fname",f.n));
+    const p = el("div","fpath",f.p); p.title = f.p;
+    left.appendChild(p);
+    const right = el("div","f-right");
+    const fmeta = el("div","fmeta");
+    fmeta.appendChild(el("span","fdate",fmtDate(f.d)));
+    fmeta.appendChild(el("span","fsize",fmtSize(f.s)));
+    const acts = el("div","actions");
+    if (f.c){
+      const chip = el("span","loc-chip","Local only");
+      chip.title = "Confidential — kept off the published shelf";
+      acts.appendChild(chip);
+    } else {
+      const up = el("button","btn upload","Upload");
+      up.onclick = () => copy('upload-report "'+f.p+'"',"Upload request copied — paste it in Claude Code");
+      acts.appendChild(up);
+    }
+    right.appendChild(fmeta); right.appendChild(acts);
+    row.appendChild(cb); row.appendChild(left); row.appendChild(right);
+    sec.appendChild(row);
+  }
+  list.appendChild(sec);
+  return files.length;
+}
+
+function makeRow(f){
+  const row = el("div","file");
+  const left = el("div");
+  const name = el("div","fname",f.n);
+  const path = el("div","fpath",f.p.replace(/^\//,""));
+  path.title = f.p;
+  left.appendChild(name); left.appendChild(path);
+  const right = el("div","f-right");
+  const fmeta = el("div","fmeta");
+  fmeta.appendChild(el("span","fdate",fmtDate(f.d)));
+  fmeta.appendChild(el("span","fsize",fmtSize(f.s)));
+  const acts = el("div","actions");
+  const open = el("a","btn open","Open");
+  wireOpen(open, hrefOf(f));
+  const share = el("button","btn share","Share");
+  share.onclick = () => openModal(f);
+  acts.appendChild(open); acts.appendChild(share);
+  right.appendChild(fmeta); right.appendChild(acts);
+  row.appendChild(left); row.appendChild(right);
+  return row;
+}
+
+function render(){
+  const q = state.q.trim().toLowerCase();
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  if (state.sort!=="topic"){
+    const dir = state.sort==="oldest" ? 1 : -1;
+    const files = DATA.filter(f=>!q || (f.n+" "+f.p+" "+(LABEL[f.t]||"")).toLowerCase().includes(q))
+      .sort((a,b)=> dir*b.d.localeCompare(a.d) || a.n.localeCompare(b.n));
+    if (!files.length){ list.appendChild(el("div","empty","No reports match.")); }
+    else {
+      const sec = el("section","group");
+      sec.id = "g-date";
+      const head = el("div","group-head");
+      head.appendChild(el("h2",null,state.sort==="newest"?"All reports · newest first":"All reports · oldest first"));
+      head.appendChild(el("span","g-meta", files.length+" "+(files.length===1?"file":"files")+" · "+fmtSize(files.reduce((a,f)=>a+f.s,0))+" · "+fmtRange(files)));
+      sec.appendChild(head);
+      files.forEach(f=>sec.appendChild(makeRow(f)));
+      list.appendChild(sec);
+    }
+    document.getElementById("count").textContent = q ? files.length+" shown" : "";
+    return;
+  }
+  let visible = renderLocal();
+  for (const g of groups){
+    const files = g.files.filter(f =>
+      (state.topic==="all" || g.k===state.topic) &&
+      (!q || (f.n+" "+f.p+" "+g.label).toLowerCase().includes(q)));
+    if (!files.length) continue;
+    const sec = el("section","group");
+    sec.id = "g-"+g.k;
+    const head = el("div","group-head");
+    const h = el("h2",null,g.label);
+    const meta = el("span","g-meta",
+      files.length+" "+(files.length===1?"file":"files")+" · "+
+      fmtSize(files.reduce((a,f)=>a+f.s,0))+" · "+fmtRange(files)+
+      (g.k==="web" ? " · saved pages, not CLI-built" : ""));
+    head.appendChild(h); head.appendChild(meta);
+    sec.appendChild(head);
+    files.forEach(f=>{ sec.appendChild(makeRow(f)); visible++; });
+    list.appendChild(sec);
+  }
+  if (!visible) list.appendChild(el("div","empty","No reports match."));
+  document.getElementById("count").textContent = (q || state.topic!=="all") ? visible+" shown" : "";
+}
+
+function selectTopic(k){
+  state.topic = k;
+  state.sort = "topic";
+  const s0 = document.getElementById("sort"); if (s0) s0.value = "topic";
+  renderToc(); render();
+  history.replaceState(null,"", k==="all" ? location.pathname+location.search : "#t="+k);
+  if (k!=="all"){
+    const s = document.getElementById("g-"+k);
+    if (s) s.scrollIntoView({behavior:"smooth",block:"start"});
+  }
+}
+
+/* ---------- share modal ---------- */
+let current = null;
+function openModal(f){
+  current = f;
+  document.getElementById("m-title").textContent = f.n;
+  document.getElementById("m-path").textContent = f.p;
+  wireOpen(document.getElementById("m-open"), hrefOf(f));
+  document.getElementById("m-mail").href = "mailto:?subject="+encodeURIComponent("Optimo report — "+f.n)+
+    "&body="+encodeURIComponent("Report: "+f.n+"\n\n"+hrefOf(f)+"\n\n(Sent from The Report Shelf — if the link asks for a Dropbox sign-in, ask for a shared link instead.)");
+  const modal = document.getElementById("modal");
+  modal.hidden = false;
+  document.getElementById("m-close").focus();
+}
+function closeModal(){ const m = document.getElementById("modal"); m.hidden = true; }
+document.getElementById("m-close").onclick = closeModal;
+document.getElementById("modal").addEventListener("click",e=>{ if(e.target.id==="modal") closeModal(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
+document.getElementById("m-copy").onclick = () => copy(hrefOf(current),"Link copied");
+document.getElementById("m-slack").onclick = () => {
+  copy('share-report "'+current.n+'" to #channel-or-@person',"Request copied — paste it in Claude Code");
+};
+
+function copy(text,msg){
+  const done = () => toast(msg||"Copied");
+  const fallback = () => {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand("copy"); done(); }catch(e){ toast("Copy failed — select and copy manually"); }
+    ta.remove();
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(fallback);
+  } else fallback();
+}
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove("show"),2200);
+}
+
+/* ---------- theme ---------- */
+const THEME_KEY = "shelfTheme";
+(function(){
+  let saved = null;
+  try{ saved = localStorage.getItem(THEME_KEY); }catch(e){}
+  if (saved) document.documentElement.setAttribute("data-theme",saved);
+  syncIcon();
+})();
+document.getElementById("theme").onclick = () => {
+  const next = document.documentElement.getAttribute("data-theme")==="dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme",next);
+  try{ localStorage.setItem(THEME_KEY,next); }catch(e){}
+  syncIcon();
+};
+function syncIcon(){
+  const dark = document.documentElement.getAttribute("data-theme")==="dark";
+  document.getElementById("i-sun").hidden = dark;
+  document.getElementById("i-moon").hidden = !dark;
+}
+
+/* ---------- search / hash / init ---------- */
+document.getElementById("q").addEventListener("input",e=>{ state.q = e.target.value; render(); });
+document.getElementById("sort").addEventListener("change",e=>{ state.sort = e.target.value; render(); });
+(function(){
+  const m = location.hash.match(/^#t=([a-z]+)$/);
+  if (m && LABEL[m[1]]) state.topic = m[1];
+})();
+renderStats();
+renderToc();
+render();
+</script>
+</body>
+</html>
